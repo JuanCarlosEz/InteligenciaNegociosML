@@ -1,0 +1,108 @@
+// src/lib/encoders.ts
+// Generado desde Python — NO EDITAR MANUALMENTE
+
+export const ENCODERS: Record<string, Record<string, number>> = {
+"Sexo": {
+    "F": 0,
+    "M": 1
+  },
+  "Distrito": {
+    "Acobamba": 0,
+    "Acolla": 1,
+    "Apata": 2,
+    "Canchayllo": 3,
+    "Chacapampa": 4,
+    "Chicche": 5,
+    "Chilca": 6,
+    "Chongos Bajo": 7,
+    "Chupaca": 8,
+    "Chupuro": 9,
+    "Colca": 10,
+    "Concepcion": 11,
+    "Cullhuas": 12,
+    "El Mantaro": 13,
+    "El Tambo": 14,
+    "Hualhuas": 15,
+    "Huancan": 16,
+    "Huancayo": 17,
+    "Huancán": 18,
+    "Huaripampa": 19,
+    "Huertas": 20,
+    "Ingenio": 21,
+    "Janjaillo": 22,
+    "Jauja": 23,
+    "Julcan": 24,
+    "Julcán": 25,
+    "Leonor Ordonez": 26,
+    "Leonor Ordóñez": 27,
+    "Llocllapampa": 28,
+    "Marco": 29,
+    "Masma": 30,
+    "Masma Chicche": 31,
+    "Mito": 32,
+    "Molinos": 33,
+    "Monobamba": 34,
+    "Muquiyauyo": 35,
+    "Nueve De Julio": 36,
+    "Orcotuna": 37,
+    "Paca": 38,
+    "Pancan": 39,
+    "Pancán": 40,
+    "Parco": 41,
+    "Pariahuanca": 42,
+    "Pilcomayo": 43,
+    "Pomucocha": 44,
+    "Pucará": 45,
+    "Quilcas": 46,
+    "Ricran": 47,
+    "Ricrán": 48,
+    "San Agustín": 49,
+    "San Agustín De Cajas": 50,
+    "San Jeronimo": 51,
+    "Santa Rosa": 52,
+    "Sapallanga": 53,
+    "Sausa": 54,
+    "Saño": 55,
+    "Sicaya": 56,
+    "Sincos": 57,
+    "Tunan Marca": 58,
+    "Viques": 59,
+    "Yauli": 60,
+    "Yauyos": 61
+  },
+  "Tratamiento": {
+    "Blanqueamiento Dental": 0,
+    "Consulta General": 1,
+    "Curación Dental": 2,
+    "Endodoncia": 3,
+    "Extracción Dental": 4,
+    "Implante Dental": 5,
+    "Limpieza Dental": 6,
+    "Ortodoncia": 7
+  },
+  "Metodo_pago": {
+    "Efectivo": 0,
+    "Plin": 1,
+    "Tarjeta": 2,
+    "Yape": 3
+  },
+  "Especialidad": {
+    "Endodoncia": 0,
+    "Odontopediatría": 1,
+    "Ortodoncia": 2,
+    "Rehabilitación Oral": 3
+  },
+  "Turno": {
+    "Mañana": 0,
+    "Tarde": 1
+  },
+  "Dia_Semana": {
+    "Friday": 0,
+    "Monday": 1,
+    "Saturday": 2,
+    "Sunday": 3,
+    "Thursday": 4,
+    "Tuesday": 5,
+    "Wednesday": 6
+  }
+};

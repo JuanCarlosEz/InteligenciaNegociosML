@@ -10,6 +10,7 @@
  *  - Edad mínima: 5 años
  *  - Edad máxima: 120 años
  *  - Monto debe ser positivo
+ *  - Limpia resultado automáticamente al cambiar datos
  * ============================================================
  */
 
@@ -72,14 +73,13 @@ export function PredictionForm() {
   }
 
   /**
-   * Limpia múltiples errores a la vez
+   * Limpia el resultado anterior
+   * Se ejecuta cuando el usuario cambia cualquier dato
    */
-  function limpiarErrores(...campos: string[]) {
-    let nuevosErrores = { ...errors };
-    campos.forEach(campo => {
-      delete nuevosErrores[campo];
-    });
-    setErrors(nuevosErrores);
+  function limpiarResultado() {
+    if (result !== null) {
+      setResult(null);
+    }
   }
 
   // --- VALIDACIONES ---
@@ -248,8 +248,8 @@ export function PredictionForm() {
                 value={edad}
                 onChange={(e) => {
                   setEdad(e.target.value);
-                  // Limpiar error completamente cuando el usuario corrige
                   limpiarError("edad");
+                  limpiarResultado();
                 }}
                 placeholder="Ej. 32" 
                 className={errors.edad ? "border-red-500 focus:ring-red-500" : ""}
@@ -261,6 +261,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setSexo(val);
                 limpiarError("sexo");
+                limpiarResultado();
               }}
               options={SEXOS}
               error={errors.sexo}
@@ -276,6 +277,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setDistrito(val);
                 limpiarError("distrito");
+                limpiarResultado();
               }}
               options={DISTRITOS}
               error={errors.distrito}
@@ -287,6 +289,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setEspecialidad(val);
                 limpiarError("especialidad");
+                limpiarResultado();
               }}
               options={ESPECIALIDADES}
               error={errors.especialidad}
@@ -302,6 +305,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setTratamiento(val);
                 limpiarError("tratamiento");
+                limpiarResultado();
               }}
               options={TRATAMIENTOS}
               error={errors.tratamiento}
@@ -313,6 +317,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setMetodoPago(val);
                 limpiarError("metodoPago");
+                limpiarResultado();
               }}
               options={METODOS_PAGO}
               error={errors.metodoPago}
@@ -328,6 +333,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setTurno(val);
                 limpiarError("turno");
+                limpiarResultado();
               }}
               options={TURNOS}
               error={errors.turno}
@@ -339,6 +345,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setDiaSemana(val);
                 limpiarError("diaSemana");
+                limpiarResultado();
               }}
               options={DIAS_SEMANA_DISPLAY}
               error={errors.diaSemana}
@@ -354,6 +361,7 @@ export function PredictionForm() {
               onChange={(val) => {
                 setMes(val);
                 limpiarError("mes");
+                limpiarResultado();
               }}
               options={MESES_DISPLAY}
               error={errors.mes}
@@ -371,8 +379,8 @@ export function PredictionForm() {
                 value={monto}
                 onChange={(e) => {
                   setMonto(e.target.value);
-                  // Limpiar error completamente cuando el usuario corrige
                   limpiarError("monto");
+                  limpiarResultado();
                 }}
                 placeholder="Ej. 150.00"
                 className={errors.monto ? "border-red-500 focus:ring-red-500" : ""}

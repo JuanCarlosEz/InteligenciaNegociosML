@@ -1,116 +1,120 @@
-// src/lib/prediccion.ts
-import { score }    from './modeloArbol';
-import { ENCODERS } from './encoders';
-import { DIAS_SEMANA_MAP, MESES_MAP } from './prediction-config';
+import { score } from "./modeloArbol";
+import { ENCODERS } from "./encoders";
 
+// ---- Tipos ----
 export interface DatosPaciente {
-  edad:        number;
-  sexo:        string;
-  distrito:    string;
+  edad: number;
+  sexo: string;            // "M" o "F"
+  distrito: string;
   tratamiento: string;
-  metodoPago:  string;
-  especialidad:string;
-  turno:       string;
-  mes:         string;  // AHORA: nombre del mes en español (Enero, Febrero, ...)
-  diaSemana:   string;  // AHORA: nombre del día en español (Lunes, Martes, ...)
-  monto:       number;
+  costo: number;
+  especialidad: string;
+  turno: string;           // "Mañana" o "Tarde"
+  mes: number;             // 1 = Enero … 12 = Diciembre
+  diaSemana: string;       // En inglés: "Monday", "Tuesday"...
+  diasAnticipacion: number;
+  reprogramada: string;    // "Sí" o "No"
 }
 
 export interface ResultadoPrediccion {
-  prediccion:            0 | 1;
-  etiqueta:              string;
-  probabilidadAsistir:   number;
+  prediccion: 0 | 1;
+  etiqueta: string;
+  probabilidadAsistir: number;
   probabilidadNoAsistir: number;
+  nivelRiesgo: "bajo" | "medio" | "alto";
 }
 
+// ---- Helper: normalizar texto removiendo acentos ----
 /**
- * Normaliza un string removiendo espacios extras y manejando caracteres especiales
+ * Normaliza un string:
+ * 1. Remueve acentos (á → a, é → e, ñ → n, etc.)
+ * 2. Convierte a minúsculas
+ * 3. Elimina espacios extra
+ * 
+ * Ejemplo:
+ * "Odontopediatría" → "odontopediatria"
+ * "Mañana" → "manana"
  */
-function normalizar(valor: string): string {
-  return valor
-    .trim()                          // Remover espacios al inicio/final
-    .toLowerCase()                   // Convertir a minúsculas
-    .replace(/\s+/g, ' ');          // Normalizar espacios múltiples a uno
+function normalizarTexto(texto: string): string {
+  return texto
+    .trim()
+    .toLowerCase()
+    // Remover acentos usando normalize + regex
+    .normalize("NFD")           // Descomponer caracteres acentuados
+    .replace(/[\u0300-\u036f]/g, "") // Eliminar marcas diacríticas
+    .replace(/\s+/g, " ");      // Normalizar espacios
 }
 
+// ---- Helper: codificar una categoría (MEJORADO) ----
 /**
- * Codifica un valor categórico a su número correspondiente
+ * Busca el valor en el encoder de forma flexible:
+ * - Insensible a mayúsculas/minúsculas
+ * - Insensible a acentos
+ * - Insensible a espacios extras
  */
-function codificar(campo: string, valor: string): number {
+function cod(campo: string, valor: string): number {
   const mapa = ENCODERS[campo];
   if (!mapa) {
-    throw new Error(`Campo "${campo}" no encontrado`);
+    throw new Error(`Campo no encontrado en encoders: "${campo}"`);
   }
 
-  // Buscar el valor en el mapa (comparación insensible a mayúsculas)
-  const valorNormalizado = normalizar(valor);
-  
+  const valorNormalizado = normalizarTexto(valor);
+
+  // Buscar en el mapa con normalización flexible
   for (const [clave, codigo] of Object.entries(mapa)) {
-    if (normalizar(clave) === valorNormalizado) {
+    if (normalizarTexto(clave) === valorNormalizado) {
       return codigo;
     }
   }
 
   // Si no encuentra, mostrar error con opciones disponibles
+  const opciones = Object.keys(mapa).join(", ");
   throw new Error(
-    `"${valor}" no válido para ${campo}. Opciones: ${Object.keys(mapa).join(', ')}`
+    `Valor "${valor}" no reconocido en "${campo}".\nOpciones válidas: ${opciones}`
   );
 }
 
-/**
- * Convierte un día en español a inglés (Lunes → Monday)
- */
-function convertirDiaAlIngles(diaSemanaEspanol: string): string {
-  const diaIngles = DIAS_SEMANA_MAP[diaSemanaEspanol];
-  if (!diaIngles) {
-    throw new Error(
-      `Día "${diaSemanaEspanol}" no válido. Opciones: ${Object.keys(DIAS_SEMANA_MAP).join(', ')}`
-    );
-  }
-  return diaIngles;
-}
-
-/**
- * Convierte un mes en español a número (Enero → 1)
- */
-function convertirMesANumero(mesEspanol: string): number {
-  const mesNumero = MESES_MAP[mesEspanol];
-  if (mesNumero === undefined) {
-    throw new Error(
-      `Mes "${mesEspanol}" no válido. Opciones: ${Object.keys(MESES_MAP).join(', ')}`
-    );
-  }
-  return mesNumero;
-}
-
+// ---- Función principal de predicción ----
 export function predecir(datos: DatosPaciente): ResultadoPrediccion {
-  // Convertir día y mes de español a inglés/número
-  const diaSemanaIngles = convertirDiaAlIngles(datos.diaSemana);
-  const mesNumero = convertirMesANumero(datos.mes);
+  // Construir el vector de entrada en el MISMO ORDEN que las FEATURES del Colab:
+  // [Edad, Sexo_cod, Distrito_cod, Tratamiento_cod, Costo,
+  //  Especialidad_cod, Turno_cod, Mes, Dia_semana_cod,
+  //  Dias_anticipacion, Reprogramada_cod]
 
-  // El orden DEBE coincidir con el de X en Python
   const entrada: number[] = [
-    datos.edad,                              // index 0 — Edad
-    codificar('Sexo',          datos.sexo),  // index 1 — Sexo_cod
-    codificar('Distrito',      datos.distrito),// index 2 — Distrito_cod
-    codificar('Tratamiento',   datos.tratamiento), // index 3
-    codificar('Metodo_pago',   datos.metodoPago),  // index 4
-    codificar('Especialidad',  datos.especialidad), // index 5
-    codificar('Turno',         datos.turno),  // index 6
-    mesNumero,                               // index 7 — Mes (convertido a número)
-    codificar('Dia_Semana',    diaSemanaIngles), // index 8 (convertido a inglés)
-    datos.monto,                             // index 9 — Monto
+    datos.edad,                                   // [0]  Edad
+    cod("Sexo", datos.sexo),                      // [1]  Sexo_cod
+    cod("Distrito", datos.distrito),              // [2]  Distrito_cod
+    cod("Tratamiento", datos.tratamiento),        // [3]  Tratamiento_cod
+    datos.costo,                                  // [4]  Costo
+    cod("Especialidad", datos.especialidad),      // [5]  Especialidad_cod
+    cod("Turno", datos.turno),                    // [6]  Turno_cod
+    datos.mes,                                    // [7]  Mes
+    cod("Dia_semana", datos.diaSemana),           // [8]  Dia_semana_cod
+    datos.diasAnticipacion,                       // [9]  Dias_anticipacion
+    cod("Reprogramada", datos.reprogramada),      // [10] Reprogramada_cod
   ];
 
-  const probs      = score(entrada);        // [prob_asiste, prob_no_asiste]
-  const prediccion = probs[1] > probs[0] ? 1 : 0;
+  // Ejecutar el modelo (retorna [prob_NoAsistio, prob_Asistio])
+  const probs = score(entrada);
+  const probAsistir = Math.round(probs[1] * 100);
+  const probNoAsistir = Math.round(probs[0] * 100);
+  const prediccion = probs[1] >= probs[0] ? 1 : 0;
+
+  const nivelRiesgo: "bajo" | "medio" | "alto" =
+    probNoAsistir < 30 ? "bajo" :
+    probNoAsistir < 60 ? "medio" : "alto";
+
+  const etiqueta =
+    prediccion === 1
+      ? "✅ El paciente asistirá a su cita"
+      : "⚠️ Riesgo: el paciente podría no asistir";
 
   return {
     prediccion,
-    etiqueta: prediccion === 0
-      ? '✅ El paciente ASISTIRÁ a su cita'
-      : '⚠️ RIESGO: El paciente NO ASISTIRÁ a su cita',
-    probabilidadAsistir:   Math.round(probs[0] * 100),
-    probabilidadNoAsistir: Math.round(probs[1] * 100),
+    etiqueta,
+    probabilidadAsistir: probAsistir,
+    probabilidadNoAsistir: probNoAsistir,
+    nivelRiesgo,
   };
 }
